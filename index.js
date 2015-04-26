@@ -1,6 +1,6 @@
 const BUILD_MODE = typeof window === 'undefined'
 
-import postcss from 'postcss'
+import postcss from 'postcss';
 
 export default (plugins) => {
   let processor = postcss(plugins),
@@ -78,9 +78,15 @@ export default (plugins) => {
         return "System\.register('" + load.name + "', [], false, function() {});";
       }).join('\n'),
       inputFiles = loads.map(l => l.address.replace(/^file:/, '')),
-      inputCSS = inputFiles.map(f => fs.readFileSync(f).toString()).join("\n")
+      inputCSS = inputFiles.map((f) => {
+        var css = fs.readFileSync(f).toString();
+        return processor.process(css, {
+          // `from` option is required so relative import can work from input dirname
+          "from": f
+        }).css;
+      }).join("\n")
 
-    return [stubDefines, cssInject, '("' + escape(processor.process(inputCSS).css) + '");'].join('\n');
+    return [stubDefines, cssInject, '("' + escape(inputCSS) + '");'].join('\n');
   }
 
   return {fetch, hotReload, bundle}
